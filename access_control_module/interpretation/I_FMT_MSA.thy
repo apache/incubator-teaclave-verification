@@ -30,8 +30,7 @@ definition subjattr_subjid::"SubjAttr\<Rightarrow>ResrcId" where
 primrec find_subjid::"SubjAttrConf\<Rightarrow>SubjAttr\<Rightarrow>bool" where
 "find_subjid nosubjattrconf sattr=False"
 | "find_subjid (subjattr_conf conf sattrx) sattr=
-(if subjattr_subjid sattrx=subjattr_subjid sattr\<and>
-    subjattr_subjid sattr\<noteq>noresrcid
+(if subjattr_subjid sattrx=subjattr_subjid sattr
 then
 True
 else find_subjid conf sattr)"
@@ -39,12 +38,10 @@ else find_subjid conf sattr)"
 primrec delete_subjattr::"SubjAttrConf\<Rightarrow>SubjAttr\<Rightarrow>SubjAttrConf" where
 "delete_subjattr nosubjattrconf sattr=nosubjattrconf"
 | "delete_subjattr (subjattr_conf conf sattrx) sattr=
-(if subjattr_subjid sattrx=subjattr_subjid sattr\<and>
-    subjattr_subjid sattr\<noteq>noresrcid
+(if subjattr_subjid sattrx=subjattr_subjid sattr
 then
-conf
-else if subjattr_subjid sattrx\<noteq>subjattr_subjid sattr\<and>
-        subjattr_subjid sattr\<noteq>noresrcid
+delete_subjattr conf sattr
+else if subjattr_subjid sattrx\<noteq>subjattr_subjid sattr
 then
 subjattr_conf(delete_subjattr conf sattr) sattrx
 else subjattr_conf conf sattrx)"
@@ -52,12 +49,10 @@ else subjattr_conf conf sattrx)"
 primrec get_subjattr::"SubjAttrConf\<Rightarrow>ResrcId\<Rightarrow>SubjAttr" where
 "get_subjattr nosubjattrconf rid=nosubjattr"
 | "get_subjattr (subjattr_conf conf sattr) rid=
-(if subjattr_subjid sattr=rid\<and>
-    rid\<noteq>noresrcid
+(if subjattr_subjid sattr=rid
 then
 sattr
-else if subjattr_subjid sattr\<noteq>rid\<and>
-        rid\<noteq>noresrcid
+else if subjattr_subjid sattr\<noteq>rid
 then
 get_subjattr conf rid
 else nosubjattr)"
@@ -65,11 +60,11 @@ else nosubjattr)"
 primrec subjattrconf_uniq::"SubjAttrConf\<Rightarrow>bool" where
 "subjattrconf_uniq nosubjattrconf=False"
 | "subjattrconf_uniq (subjattr_conf conf sattr)=
-(if (\<not>find_subjid conf sattr)\<and>
+(if subjattr_subjid sattr\<noteq>noresrcid\<and>
     conf=nosubjattrconf
 then
 True
-else if conf\<noteq>nosubjattrconf\<and>
+else if subjattr_subjid sattr\<noteq>noresrcid\<and>
         (\<not>find_subjid conf sattr)\<and>
         subjattrconf_uniq conf
 then
@@ -126,56 +121,30 @@ next
                    (\<exists>conf attr. x = subjattr_conf conf attr)" by auto
   qed
 next
+  show "subjattr_subjid nosubjattr = noresrcid" 
+    by (auto simp add:subjattr_subjid_def nosubjattr_def noresrcattr_def)
+next
   fix attr
   show "\<not> find_subjid nosubjattrconf attr" by auto
 next
-  show "subjattr_subjid nosubjattr = noresrcid" 
-    by (auto simp:subjattr_subjid_def nosubjattr_def noresrcattr_def)
+  fix attrx
+  fix attr
+  fix conf
+  show "subjattr_subjid attrx = subjattr_subjid attr \<Longrightarrow>
+       find_subjid (subjattr_conf conf attrx) attr" 
+    by auto
 next
   fix conf
   fix attrx
   fix attr
-  show "conf = nosubjattrconf \<and>
-       subjattr_subjid attr \<noteq> noresrcid \<and>
-       subjattr_subjid attrx = subjattr_subjid attr \<Longrightarrow>
+  show "find_subjid conf attr \<Longrightarrow>
        find_subjid (subjattr_conf conf attrx) attr" by auto
 next
   fix conf
   fix attrx
   fix attr
-  show "conf \<noteq> nosubjattrconf \<and>
-       subjattr_subjid attr \<noteq> noresrcid \<and>
-       subjattr_subjid attrx = subjattr_subjid attr \<Longrightarrow>
-       find_subjid (subjattr_conf conf attrx) attr" by auto
-next
-  fix conf
-  fix attrx
-  fix attr
-  show "conf \<noteq> nosubjattrconf \<and> find_subjid conf attr \<Longrightarrow>
-       find_subjid (subjattr_conf conf attrx) attr" by auto
-next
-  fix conf attr attrx
-  show "find_subjid conf attr \<and>
-       subjattr_subjid attr = subjattr_subjid attrx \<Longrightarrow>
-       find_subjid conf attrx"
-  proof (induct conf)
-    case nosubjattrconf
-    then show ?case by auto
-  next
-    case (subjattr_conf conf x2)
-    then show ?case by auto
-  qed
-next
-  fix conf
-  fix attrx
-  fix attr
-  show "\<not> (conf = nosubjattrconf \<and>
-           subjattr_subjid attr \<noteq> noresrcid \<and>
-           subjattr_subjid attrx = subjattr_subjid attr \<or>
-           conf \<noteq> nosubjattrconf \<and>
-           subjattr_subjid attr \<noteq> noresrcid \<and>
-           subjattr_subjid attrx = subjattr_subjid attr \<or>
-           conf \<noteq> nosubjattrconf \<and> find_subjid conf attr) \<Longrightarrow>
+  show "\<not> find_subjid conf attr \<and>
+       subjattr_subjid attrx \<noteq> subjattr_subjid attr \<Longrightarrow>
        \<not> find_subjid (subjattr_conf conf attrx) attr" by auto
 next
   fix attr
@@ -184,22 +153,14 @@ next
   fix attrx
   fix attr
   fix conf
-  show "subjattr_subjid attrx = subjattr_subjid attr \<and>
-       subjattr_subjid attr \<noteq> noresrcid \<Longrightarrow>
-       delete_subjattr (subjattr_conf conf attrx) attr = conf" by auto
-next
-  fix attrx
-  fix attr
-  fix conf
-  show "subjattr_subjid attr = noresrcid \<Longrightarrow>
+  show "subjattr_subjid attrx = subjattr_subjid attr \<Longrightarrow>
        delete_subjattr (subjattr_conf conf attrx) attr =
-       subjattr_conf conf attrx" by auto
+       delete_subjattr conf attr" by auto
 next
   fix attrx
   fix attr
   fix conf
-  show "subjattr_subjid attrx \<noteq> subjattr_subjid attr \<and>
-       subjattr_subjid attr \<noteq> noresrcid \<Longrightarrow>
+  show "subjattr_subjid attrx \<noteq> subjattr_subjid attr \<Longrightarrow>
        delete_subjattr (subjattr_conf conf attrx) attr =
        subjattr_conf (delete_subjattr conf attr) attrx" by auto
 next
@@ -209,19 +170,21 @@ next
   fix attr 
   fix elem
   fix conf
-  show "elem \<noteq> noresrcid \<and> subjattr_subjid attr = elem \<Longrightarrow>
+  show "subjattr_subjid attr = elem \<Longrightarrow>
        get_subjattr (subjattr_conf conf attr) elem = attr" by auto
 next
   fix attr
   fix elem
   fix conf
-  show "elem = noresrcid \<Longrightarrow>
+  show "get_subjattr conf elem = nosubjattr \<and>
+       subjattr_subjid attr \<noteq> elem \<Longrightarrow>
        get_subjattr (subjattr_conf conf attr) elem = nosubjattr" by auto
 next
   fix elem
   fix attr
   fix conf
-  show "elem \<noteq> noresrcid \<and> subjattr_subjid attr \<noteq> elem \<Longrightarrow>
+  show "get_subjattr conf elem \<noteq> nosubjattr \<and>
+       subjattr_subjid attr \<noteq> elem \<Longrightarrow>
        get_subjattr (subjattr_conf conf attr) elem =
        get_subjattr conf elem" by auto
 next
@@ -229,21 +192,39 @@ next
 next
   fix conf
   fix attr
-  show "conf = nosubjattrconf \<and> \<not> find_subjid conf attr \<Longrightarrow>
+  show "subjattr_subjid attr \<noteq> noresrcid \<and> conf = nosubjattrconf \<Longrightarrow>
        subjattrconf_uniq (subjattr_conf conf attr)" by auto
 next
   fix conf
   fix attr
-  show "conf \<noteq> nosubjattrconf \<and>
-       \<not> find_subjid conf attr \<and> subjattrconf_uniq conf \<Longrightarrow>
+  show "subjattrconf_uniq conf \<and>
+       \<not> find_subjid conf attr \<and> subjattr_subjid attr \<noteq> noresrcid \<Longrightarrow>
        subjattrconf_uniq (subjattr_conf conf attr)" by auto
 next
   fix conf
   fix attr
-  show "\<not> (conf = nosubjattrconf \<and> \<not> find_subjid conf attr \<or>
-           conf \<noteq> nosubjattrconf \<and>
-           \<not> find_subjid conf attr \<and> subjattrconf_uniq conf) \<Longrightarrow>
+  show "subjattr_subjid attr = noresrcid \<Longrightarrow>
        \<not> subjattrconf_uniq (subjattr_conf conf attr)" by auto
+next
+  fix conf
+  fix attr
+  show "conf \<noteq> nosubjattrconf \<and> \<not> subjattrconf_uniq conf \<Longrightarrow>
+       \<not> subjattrconf_uniq (subjattr_conf conf attr)" by auto
+next
+  fix conf
+  fix attr
+  show "conf \<noteq> nosubjattrconf \<and> find_subjid conf attr \<Longrightarrow>
+       \<not> subjattrconf_uniq (subjattr_conf conf attr)" by auto
+next
+  show "\<And>P conf.
+       P nosubjattrconf \<Longrightarrow>
+       (\<And>conf1 attr1. P conf1 \<Longrightarrow> P (subjattr_conf conf1 attr1)) \<Longrightarrow>
+       P conf"
+  proof (erule SubjAttrConf.induct)
+    show "\<And>P conf x1 x2.
+         (\<And>conf1 attr1. P conf1 \<Longrightarrow> P (subjattr_conf conf1 attr1)) \<Longrightarrow>
+         P x1 \<Longrightarrow> P (subjattr_conf x1 x2)" by auto
+  qed
 next
   fix sattr
   show "subjattr_subjid sattr = presrc_id (subj_resrcattr sattr)" 
@@ -319,8 +300,7 @@ definition objattr_objid::"ObjAttr\<Rightarrow>ResrcId" where
 primrec find_objid::"ObjAttrConf\<Rightarrow>ObjAttr\<Rightarrow>bool" where
 "find_objid noobjattrconf oattr=False"
 | "find_objid (objattr_conf conf oattrx) oattr=
-(if objattr_objid oattrx=objattr_objid oattr \<and>
-    objattr_objid oattr\<noteq>noresrcid
+(if objattr_objid oattrx=objattr_objid oattr
 then
 True
 else find_objid conf oattr)"
@@ -328,12 +308,10 @@ else find_objid conf oattr)"
 primrec delete_objattr::"ObjAttrConf\<Rightarrow>ObjAttr\<Rightarrow>ObjAttrConf" where
 "delete_objattr noobjattrconf oattr=noobjattrconf"
 | "delete_objattr (objattr_conf conf oattrx) oattr=
-(if objattr_objid oattrx=objattr_objid oattr \<and>
-    objattr_objid oattr\<noteq>noresrcid
+(if objattr_objid oattrx=objattr_objid oattr
 then
-conf
-else if objattr_objid oattrx\<noteq>objattr_objid oattr \<and>
-        objattr_objid oattr\<noteq>noresrcid
+delete_objattr conf oattr
+else if objattr_objid oattrx\<noteq>objattr_objid oattr 
 then
 objattr_conf(delete_objattr conf oattr) oattrx
 else objattr_conf conf oattrx)"
@@ -341,12 +319,10 @@ else objattr_conf conf oattrx)"
 primrec get_objattr::"ObjAttrConf\<Rightarrow>ResrcId\<Rightarrow>ObjAttr" where
 "get_objattr noobjattrconf rid=noobjattr"
 | "get_objattr (objattr_conf conf oattr) rid=
-(if objattr_objid oattr=rid \<and>
-    rid\<noteq>noresrcid
+(if objattr_objid oattr=rid
 then
 oattr
-else if objattr_objid oattr\<noteq>rid \<and>
-        rid\<noteq>noresrcid
+else if objattr_objid oattr\<noteq>rid
 then
 get_objattr conf rid
 else noobjattr)"
@@ -354,11 +330,11 @@ else noobjattr)"
 primrec valid_objattrconf::"ObjAttrConf\<Rightarrow>bool" where
 "valid_objattrconf noobjattrconf=False"
 | "valid_objattrconf (objattr_conf conf oattr)=
-(if (\<not>find_objid conf oattr)\<and>
+(if objattr_objid oattr\<noteq>noresrcid\<and>
     conf=noobjattrconf
 then
 True
-else if conf\<noteq>noobjattrconf\<and>
+else if objattr_objid oattr\<noteq>noresrcid\<and>
         (\<not>find_objid conf oattr)\<and>
         valid_objattrconf conf
 then
@@ -405,47 +381,19 @@ next
   fix conf
   fix attrx
   fix attr
-  show "conf = noobjattrconf \<and>
-       objattr_objid attr \<noteq> noresrcid \<and>
-       objattr_objid attrx = objattr_objid attr \<Longrightarrow>
+  show "objattr_objid attrx = objattr_objid attr \<Longrightarrow>
        find_objid (objattr_conf conf attrx) attr" by auto
 next
   fix conf
   fix attrx
   fix attr
-  show "conf \<noteq> noobjattrconf \<and>
-       objattr_objid attr \<noteq> noresrcid \<and>
-       objattr_objid attrx = objattr_objid attr \<Longrightarrow>
-       find_objid (objattr_conf conf attrx) attr" by auto
+  show "find_objid conf attr \<Longrightarrow> find_objid (objattr_conf conf attrx) attr" by auto
 next
   fix conf
   fix attrx
   fix attr
-  show "conf \<noteq> noobjattrconf \<and> find_objid conf attr \<Longrightarrow>
-       find_objid (objattr_conf conf attrx) attr" by auto
-next
-  fix conf attr attrx
-  show "find_objid conf attr \<and>
-       objattr_objid attr = objattr_objid attrx \<Longrightarrow>
-       find_objid conf attrx"
-  proof (induct conf)
-    case noobjattrconf
-    then show ?case by auto
-  next
-    case (objattr_conf conf x2)
-    then show ?case by auto
-  qed
-next
-  fix conf
-  fix attrx
-  fix attr
-  show "\<not> (conf = noobjattrconf \<and>
-           objattr_objid attr \<noteq> noresrcid \<and>
-           objattr_objid attrx = objattr_objid attr \<or>
-           conf \<noteq> noobjattrconf \<and>
-           objattr_objid attr \<noteq> noresrcid \<and>
-           objattr_objid attrx = objattr_objid attr \<or>
-           conf \<noteq> noobjattrconf \<and> find_objid conf attr) \<Longrightarrow>
+  show "\<not> find_objid conf attr \<and>
+       objattr_objid attrx \<noteq> objattr_objid attr \<Longrightarrow>
        \<not> find_objid (objattr_conf conf attrx) attr" by auto
 next
   fix attr
@@ -454,22 +402,14 @@ next
   fix attrx
   fix attr
   fix conf
-  show "objattr_objid attrx = objattr_objid attr \<and>
-       objattr_objid attr \<noteq> noresrcid \<Longrightarrow>
-       delete_objattr (objattr_conf conf attrx) attr = conf" by auto
-next
-  fix attrx
-  fix attr
-  fix conf
-  show "objattr_objid attr = noresrcid \<Longrightarrow>
+  show "objattr_objid attrx = objattr_objid attr \<Longrightarrow>
        delete_objattr (objattr_conf conf attrx) attr =
-       objattr_conf conf attrx" by auto
+       delete_objattr conf attr" by auto
 next
   fix attrx
   fix attr
   fix conf
-  show "objattr_objid attrx \<noteq> objattr_objid attr \<and>
-       objattr_objid attr \<noteq> noresrcid \<Longrightarrow>
+  show "objattr_objid attrx \<noteq> objattr_objid attr \<Longrightarrow>
        delete_objattr (objattr_conf conf attrx) attr =
        objattr_conf (delete_objattr conf attr) attrx" by auto
 next
@@ -479,41 +419,58 @@ next
   fix attr
   fix elem
   fix conf
-  show "elem \<noteq> noresrcid \<and> objattr_objid attr = elem \<Longrightarrow>
+  show "objattr_objid attr = elem \<Longrightarrow>
        get_objattr (objattr_conf conf attr) elem = attr" by auto
 next
   fix attr
   fix elem
   fix conf
-  show "elem = noresrcid \<Longrightarrow>
+  show "get_objattr conf elem = noobjattr \<and> objattr_objid attr \<noteq> elem \<Longrightarrow>
        get_objattr (objattr_conf conf attr) elem = noobjattr" by auto
 next
   fix elem
   fix attr
   fix conf
-  show "elem \<noteq> noresrcid \<and> objattr_objid attr \<noteq> elem \<Longrightarrow>
-       get_objattr (objattr_conf conf attr) elem =
-       get_objattr conf elem" by auto
+  show "get_objattr conf elem \<noteq> noobjattr \<and> objattr_objid attr \<noteq> elem \<Longrightarrow>
+       get_objattr (objattr_conf conf attr) elem = get_objattr conf elem" by auto
 next
   show "\<not> valid_objattrconf noobjattrconf" by auto
 next
   fix conf
   fix attr
-  show "conf = noobjattrconf \<and> \<not> find_objid conf attr \<Longrightarrow>
+  show "objattr_objid attr \<noteq> noresrcid \<and> conf = noobjattrconf \<Longrightarrow>
        valid_objattrconf (objattr_conf conf attr)" by auto
 next
   fix conf
   fix attr
-  show "conf \<noteq> noobjattrconf \<and>
-       \<not> find_objid conf attr \<and> valid_objattrconf conf \<Longrightarrow>
+  show "valid_objattrconf conf \<and>
+       \<not> find_objid conf attr \<and> objattr_objid attr \<noteq> noresrcid \<Longrightarrow>
        valid_objattrconf (objattr_conf conf attr)" by auto
 next
   fix conf
   fix attr
-  show "\<not> (conf = noobjattrconf \<and> \<not> find_objid conf attr \<or>
-           conf \<noteq> noobjattrconf \<and>
-           \<not> find_objid conf attr \<and> valid_objattrconf conf) \<Longrightarrow>
+  show "objattr_objid attr = noresrcid \<Longrightarrow>
        \<not> valid_objattrconf (objattr_conf conf attr)" by auto
+next
+  fix conf
+  fix attr
+  show "conf \<noteq> noobjattrconf \<and> \<not> valid_objattrconf conf \<Longrightarrow>
+       \<not> valid_objattrconf (objattr_conf conf attr)" by auto
+next
+  fix conf
+  fix attr
+  show "conf \<noteq> noobjattrconf \<and> find_objid conf attr \<Longrightarrow>
+       \<not> valid_objattrconf (objattr_conf conf attr)" by auto
+next
+  show "\<And>P conf.
+       P noobjattrconf \<Longrightarrow>
+       (\<And>conf1 attr1. P conf1 \<Longrightarrow> P (objattr_conf conf1 attr1)) \<Longrightarrow>
+       P conf"
+  proof (erule ObjAttrConf.induct)
+    show "\<And>P conf x1 x2.
+         (\<And>conf1 attr1. P conf1 \<Longrightarrow> P (objattr_conf conf1 attr1)) \<Longrightarrow>
+         P x1 \<Longrightarrow> P (objattr_conf x1 x2)" by auto
+  qed
 next
   fix oattr
   show "objattr_objid oattr = presrc_id (obj_resrcattr oattr)"
