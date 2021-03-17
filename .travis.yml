@@ -1,0 +1,25 @@
+language: generic
+
+sudo: false
+
+env:
+  global:
+  - INSTALL_DIR: $HOME/.local
+  - ISABELLE_VERSION: Isabelle2021
+  - ISABELLE_TARBALL: ${ISABELLE_VERSION}_linux.tar.gz
+  - ISABELLE_URL: http://isabelle.in.tum.de/dist/${ISABELLE_TARBALL}
+  - ISABELLE_DIR: ${INSTALL_DIR}/${ISABELLE_VERSION}
+  - ISABELLE: ${ISABELLE_DIR}/bin/isabelle
+
+cache:
+  directories:
+  - ${INSTALL_DIR}
+  - $HOME/.isabelle
+
+before_install:
+  - mkdir -p ${INSTALL_DIR}
+  - test -e $ISABELLE || { wget ${ISABELLE_URL} && tar -C ${INSTALL_DIR}/ -xzf ${ISABELLE_TARBALL}; }
+
+install: true
+
+script: $ISABELLE build -d access_control_module AccessControlModule
