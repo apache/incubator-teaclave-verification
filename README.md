@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/apache/incubator-teaclave-verification.svg?branch=master)](https://travis-ci.com/apache/incubator-teaclave-verification)
+
 # Teaclave Verification
 
 This repository contains formal descriptions, specifications, and proofs for Teaclave.
