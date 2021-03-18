@@ -53,11 +53,7 @@ locale AttrConf=
   assumes ATTRCONFHLR13:"get_attr noattrconf elem=noattr"
   assumes ATTRCONFHLR14:"attr_elem attr=elem\<Longrightarrow>
                         get_attr(attr_conf conf attr) elem=attr"
-  assumes ATTRCONFHLR15:"get_attr conf elem=noattr\<and>
-                        attr_elem attr\<noteq>elem\<Longrightarrow>
-                        get_attr(attr_conf conf attr) elem=noattr"
-  assumes ATTRCONFHLR16:"get_attr conf elem\<noteq>noattr\<and>
-                        attr_elem attr\<noteq>elem\<Longrightarrow>
+  assumes ATTRCONFHLR16:"attr_elem attr\<noteq>elem\<Longrightarrow>
                         get_attr(attr_conf conf attr) elem=get_attr conf elem"
   assumes ATTRCONFHLR17:"\<not>valid_attrconf noattrconf"
   assumes ATTRCONFHLR18:"attr_elem attr\<noteq>noelem\<and>
@@ -92,6 +88,38 @@ lemma find_dual:
    attr_elem attrx=attr_elem attr=
    (\<not>((\<not>find_elem conf attr)\<and>attr_elem attrx\<noteq>attr_elem attr))"
   by blast
+
+lemma find_inverse:
+  "find_elem(attr_conf conf attrx) attr\<Longrightarrow>find_elem conf attr\<or>
+                                          attr_elem attrx=attr_elem attr"
+proof -
+  assume "find_elem(attr_conf conf attrx) attr"
+  from this show "find_elem conf attr\<or>
+                  attr_elem attrx=attr_elem attr"
+  proof (rule contrapos_pp)
+    assume "\<not> (find_elem conf attr \<or> attr_elem attrx = attr_elem attr)"
+    from this have "(\<not>find_elem conf attr)\<and>attr_elem attrx\<noteq>attr_elem attr"
+      by (auto simp:find_dual)
+    from this show "\<not> find_elem (attr_conf conf attrx) attr"
+      by (auto simp:ATTRCONFHLR9)
+  qed
+qed
+
+lemma not_find_inverse:
+  "\<not>find_elem(attr_conf conf attrx) attr\<Longrightarrow>(\<not>find_elem conf attr)\<and>
+                                           attr_elem attrx\<noteq>attr_elem attr"
+proof -
+  assume "\<not>find_elem(attr_conf conf attrx) attr"
+  from this show "(\<not>find_elem conf attr)\<and>
+                 attr_elem attrx\<noteq>attr_elem attr"
+  proof (rule contrapos_pp)
+    assume "\<not> (\<not> find_elem conf attr \<and> attr_elem attrx \<noteq> attr_elem attr)"
+    from this have "find_elem conf attr\<or>
+                    attr_elem attrx=attr_elem attr" by auto
+    from this show "\<not> \<not> find_elem (attr_conf conf attrx) attr"
+      by (auto simp:find_total)
+  qed
+qed
 
 lemma valid_total:"(attr_elem attr\<noteq>noelem\<and>
                     conf=noattrconf)\<or>
@@ -138,6 +166,57 @@ lemma valid_dual:
     (conf\<noteq>noattrconf\<and>find_elem conf attr)))"
   by blast
 
+lemma valid_inverse:
+  "valid_attrconf(attr_conf conf attr)\<Longrightarrow>(attr_elem attr\<noteq>noelem\<and>
+                                         conf=noattrconf)\<or>
+                                         (valid_attrconf conf\<and>
+                                         (\<not>find_elem conf attr)\<and>
+                                         attr_elem attr\<noteq>noelem)"
+proof -
+  assume "valid_attrconf(attr_conf conf attr)"
+  from this show "(attr_elem attr\<noteq>noelem\<and>
+                  conf=noattrconf)\<or>
+                  (valid_attrconf conf\<and>
+                  (\<not>find_elem conf attr)\<and>
+                  attr_elem attr\<noteq>noelem)"
+  proof (rule contrapos_pp)
+    assume "\<not> (attr_elem attr \<noteq> noelem \<and> conf = noattrconf \<or>
+            valid_attrconf conf \<and>
+            \<not> find_elem conf attr \<and> attr_elem attr \<noteq> noelem)"
+    from this have "attr_elem attr=noelem\<or>
+                    ((\<not>valid_attrconf conf)\<and>conf\<noteq>noattrconf)\<or>
+                    (conf\<noteq>noattrconf\<and>find_elem conf attr)"
+      by (auto simp:valid_dual)
+    from this show "\<not> valid_attrconf (attr_conf conf attr)"
+      by (auto simp:not_valid_total)
+  qed
+qed
+
+lemma not_valid_inverse:
+  "\<not>valid_attrconf(attr_conf conf attr)\<Longrightarrow>attr_elem attr=noelem\<or>
+                                          ((\<not>valid_attrconf conf)\<and>
+                                          conf\<noteq>noattrconf)\<or>
+                                          (conf\<noteq>noattrconf\<and>
+                                          find_elem conf attr)"
+proof -
+  assume "\<not>valid_attrconf(attr_conf conf attr)"
+  from this show "attr_elem attr=noelem\<or>
+                  ((\<not>valid_attrconf conf)\<and>
+                  conf\<noteq>noattrconf)\<or>
+                  (conf\<noteq>noattrconf\<and>
+                  find_elem conf attr)"
+  proof (rule contrapos_pp)
+    assume "\<not> (attr_elem attr = noelem \<or>
+            \<not> valid_attrconf conf \<and> conf \<noteq> noattrconf \<or>
+            conf \<noteq> noattrconf \<and> find_elem conf attr)"
+    from this have "(attr_elem attr\<noteq>noelem\<and>conf=noattrconf)\<or>
+                   (valid_attrconf conf\<and>(\<not>find_elem conf attr)\<and>attr_elem attr\<noteq>noelem)"
+      by auto
+    from this show "\<not> \<not> valid_attrconf (attr_conf conf attr)"
+      by (auto simp:valid_total)
+  qed
+qed
+
 lemma ATTRCONFHLR23:"noattrconf\<noteq>attr_conf conf attr"
 proof
   fix conf attr
@@ -174,29 +253,9 @@ next
                       conf1=noattrconf)\<or>
                       (valid_attrconf conf1\<and>
                       (\<not>find_elem conf1 attr1)\<and>
-                      attr_elem attr1\<noteq>noelem)"
-    proof (rule contrapos_pp)
-      assume "\<not> (attr_elem attr1 \<noteq> noelem \<and> 
-              conf1 = noattrconf \<or>
-              valid_attrconf conf1 \<and>
-              \<not> find_elem conf1 attr1 \<and> 
-              attr_elem attr1 \<noteq> noelem)"
-      from this have "attr_elem attr1=noelem\<or>
-                      ((\<not>valid_attrconf conf1)\<and>
-                      conf1\<noteq>noattrconf)\<or>
-                      (conf1\<noteq>noattrconf\<and>
-                      find_elem conf1 attr1)" by (auto simp:valid_dual)
-      from this show "\<not> valid_attrconf (attr_conf conf1 attr1)" by (rule not_valid_total)
-    qed
+                      attr_elem attr1\<noteq>noelem)" by (auto simp:valid_inverse)
     from 2 have 2:"find_elem conf1 attr\<or>
-                       attr_elem attr1=attr_elem attr"
-    proof (rule contrapos_pp)
-      assume "\<not> (find_elem conf1 attr \<or>
-                 attr_elem attr1 = attr_elem attr)"
-      from this have "((\<not>find_elem conf1 attr)\<and>
-                       attr_elem attr1\<noteq>attr_elem attr)" by (auto simp:find_dual)
-      from this show "\<not> find_elem (attr_conf conf1 attr1) attr" by (rule ATTRCONFHLR9)
-    qed
+                       attr_elem attr1=attr_elem attr" by (auto simp:find_inverse)
     from 2 3 4 have "(find_elem conf1 attr \<or> 
                      attr_elem attr1 = attr_elem attr)\<and>
                      (noelem = attr_elem attr)\<and>
@@ -231,16 +290,215 @@ next
   from this have 1:"attr_elem attr = attr_elem attrx"
                  and 2:"find_elem (attr_conf conf1 attr1) attr" by auto
   from 2 have 2:"find_elem conf1 attr\<or>
-                 attr_elem attr1=attr_elem attr"
-  proof (rule contrapos_pp)
-    assume "\<not> (find_elem conf1 attr \<or>
-           attr_elem attr1 = attr_elem attr)"
-    from this have "((\<not>find_elem conf1 attr)\<and>
-                   attr_elem attr1\<noteq>attr_elem attr)" by (auto simp:find_dual)
-    from this show "\<not> find_elem (attr_conf conf1 attr1) attr" by (rule ATTRCONFHLR9)
-  qed
+                 attr_elem attr1=attr_elem attr" by (auto simp:find_inverse)
   from 1 2 show "find_elem (attr_conf conf1 attr1) attrx"
     by (auto simp add:0 ATTRCONFHLR8 ATTRCONFHLR7)
+qed
+
+lemma ATTRCONFHLR27:"find_elem conf attr\<and>
+                    \<not>find_elem conf attrx\<Longrightarrow>attr_elem attr\<noteq>attr_elem attrx"
+proof
+  show "find_elem conf attr \<and> \<not> find_elem conf attrx \<Longrightarrow>
+       attr_elem attr = attr_elem attrx \<Longrightarrow> False"
+    by (auto simp:ATTRCONFHLR26)
+qed
+
+lemma ATTRCONFHLR28:"valid_attrconf conf\<and>
+                     find_elem conf attr\<and>
+                     attr_elem attr=elem\<Longrightarrow>attr_elem(get_attr conf elem)=elem"
+proof (induction conf rule:ATTRCONFINDUCT)
+  show "valid_attrconf noattrconf \<and>
+       find_elem noattrconf attr \<and> attr_elem attr = elem \<Longrightarrow>
+       attr_elem (get_attr noattrconf elem) = elem" by (auto simp:ATTRCONFHLR17)
+next
+  fix conf1 attr1
+  assume 0:"valid_attrconf conf1 \<and>
+           find_elem conf1 attr \<and> attr_elem attr = elem \<Longrightarrow>
+           attr_elem (get_attr conf1 elem) = elem"
+  assume "valid_attrconf (attr_conf conf1 attr1) \<and>
+         find_elem (attr_conf conf1 attr1) attr \<and> attr_elem attr = elem"
+  from this have 1:"valid_attrconf (attr_conf conf1 attr1)"
+                 and 2:"find_elem (attr_conf conf1 attr1) attr"
+                 and 3:"attr_elem attr = elem" by auto
+  from 1 have 1:"(attr_elem attr1\<noteq>noelem\<and>
+                 conf1=noattrconf)\<or>
+                 (valid_attrconf conf1\<and>
+                 (\<not>find_elem conf1 attr1)\<and>
+                 attr_elem attr1\<noteq>noelem)" by (auto simp:valid_inverse)
+  from 2 have 2:"find_elem conf1 attr\<or>
+                 attr_elem attr1=attr_elem attr" by (auto simp:find_inverse)
+  from 1 2 3 show "attr_elem (get_attr (attr_conf conf1 attr1) elem) = elem"
+  proof -
+    show "attr_elem attr1 \<noteq> noelem \<and> conf1 = noattrconf \<or>
+          valid_attrconf conf1 \<and>
+          \<not> find_elem conf1 attr1 \<and> attr_elem attr1 \<noteq> noelem \<Longrightarrow>
+          find_elem conf1 attr \<or> attr_elem attr1 = attr_elem attr \<Longrightarrow>
+          attr_elem attr = elem \<Longrightarrow>
+          attr_elem (get_attr (attr_conf conf1 attr1) elem) = elem"
+    proof (erule disjE)+
+      show "attr_elem attr = elem \<Longrightarrow>
+            attr_elem attr1 \<noteq> noelem \<and> conf1 = noattrconf \<Longrightarrow>
+            find_elem conf1 attr \<Longrightarrow>
+            attr_elem (get_attr (attr_conf conf1 attr1) elem) = elem" 
+        by (auto simp:ATTRCONFHLR6)
+    next
+      show "attr_elem attr = elem \<Longrightarrow>
+            attr_elem attr1 \<noteq> noelem \<and> conf1 = noattrconf \<Longrightarrow>
+            attr_elem attr1 = attr_elem attr \<Longrightarrow>
+            attr_elem (get_attr (attr_conf conf1 attr1) elem) = elem"
+        by (auto simp:ATTRCONFHLR14)
+    next
+      show "find_elem conf1 attr \<or> attr_elem attr1 = attr_elem attr \<Longrightarrow>
+            attr_elem attr = elem \<Longrightarrow>
+            valid_attrconf conf1 \<and>
+            \<not> find_elem conf1 attr1 \<and> attr_elem attr1 \<noteq> noelem \<Longrightarrow>
+            attr_elem (get_attr (attr_conf conf1 attr1) elem) = elem"
+      proof (erule disjE)
+        show "attr_elem attr = elem \<Longrightarrow>
+              valid_attrconf conf1 \<and>
+              \<not> find_elem conf1 attr1 \<and> attr_elem attr1 \<noteq> noelem \<Longrightarrow>
+              attr_elem attr1 = attr_elem attr \<Longrightarrow>
+              attr_elem (get_attr (attr_conf conf1 attr1) elem) = elem"
+          by (auto simp:ATTRCONFHLR14)
+      next
+        assume 1:"attr_elem attr = elem"
+        assume "valid_attrconf conf1 \<and>
+                \<not> find_elem conf1 attr1 \<and> attr_elem attr1 \<noteq> noelem"
+        from this have 2:"valid_attrconf conf1"
+                       and 3:"\<not> find_elem conf1 attr1"
+                       and 4:"attr_elem attr1 \<noteq> noelem" by auto
+        assume 5:"find_elem conf1 attr"
+        from 5 3 1 have 6:"elem\<noteq>attr_elem attr1" 
+          by (auto simp:ATTRCONFHLR27)
+        from this have 6:"get_attr(attr_conf conf1 attr1) elem=get_attr conf1 elem"
+          by (auto simp:ATTRCONFHLR16)
+        show ?thesis
+        proof (simp add:6)
+          from 2 5 1 show "attr_elem (get_attr conf1 elem) = elem" by (auto simp:0)
+        qed
+      qed
+    qed
+  qed
+qed
+
+lemma ATTRCONFHLR29:"\<not>find_elem conf attr\<Longrightarrow>\<not>find_elem (delete_attr conf attr) attr"
+proof (induction conf rule:ATTRCONFINDUCT)
+  show "\<not> find_elem noattrconf attr \<Longrightarrow>
+        \<not> find_elem (delete_attr noattrconf attr) attr"
+    by (auto simp add:ATTRCONFHLR10)
+next
+  fix conf1 attr1
+  assume 0:"\<not> find_elem conf1 attr \<Longrightarrow>
+            \<not> find_elem (delete_attr conf1 attr) attr"
+  assume 1:"\<not> find_elem (attr_conf conf1 attr1) attr"
+  from this have 1:"(\<not>find_elem conf1 attr)\<and>
+                    attr_elem attr1\<noteq>attr_elem attr" by (auto simp:not_find_inverse)
+  from this have 1:"\<not>find_elem conf1 attr"
+                 and 2:"attr_elem attr1\<noteq>attr_elem attr" by auto
+  from 2 have 3:"delete_attr(attr_conf conf1 attr1) attr=
+                 attr_conf (delete_attr conf1 attr) attr1" by (auto simp:ATTRCONFHLR12)
+  show "\<not> find_elem (delete_attr (attr_conf conf1 attr1) attr) attr"
+  proof (simp add:3;rule ATTRCONFHLR9)
+    from 1 2 show "\<not> find_elem (delete_attr conf1 attr) attr \<and>
+                  attr_elem attr1 \<noteq> attr_elem attr" by (auto simp:0)
+  qed
+qed
+
+lemma ATTRCONFHLR30:"\<not>find_elem conf attr\<and>
+                    attr_elem attr=attr_elem attrx\<Longrightarrow>\<not>find_elem conf attrx"
+proof
+  assume "\<not> find_elem conf attr \<and> attr_elem attr = attr_elem attrx"
+  from this have 0:"\<not> find_elem conf attr"
+                 and 1:"attr_elem attr = attr_elem attrx" by auto
+  assume "find_elem conf attrx"
+  from this 1 have "find_elem conf attr" by (auto simp:ATTRCONFHLR26)
+  from this 0 show False by auto
+qed
+
+lemma ATTRCONFHLR31:"valid_attrconf conf\<and>
+                    find_elem conf attr\<Longrightarrow>\<not>find_elem(delete_attr conf attr) attr"
+proof (induction conf rule:ATTRCONFINDUCT)
+  show "valid_attrconf noattrconf \<and> find_elem noattrconf attr \<Longrightarrow>
+        \<not> find_elem (delete_attr noattrconf attr) attr"
+    by (auto simp:ATTRCONFHLR17)
+next
+  fix conf1
+  fix attr1
+  assume 0:"valid_attrconf conf1 \<and> find_elem conf1 attr \<Longrightarrow>
+            \<not> find_elem (delete_attr conf1 attr) attr"
+  assume "valid_attrconf (attr_conf conf1 attr1) \<and>
+          find_elem (attr_conf conf1 attr1) attr"
+  from this have 1:"valid_attrconf (attr_conf conf1 attr1)"
+                 and 2:"find_elem (attr_conf conf1 attr1) attr" by auto
+  from 1 have 1:"(attr_elem attr1\<noteq>noelem\<and>
+                 conf1=noattrconf)\<or>
+                 (valid_attrconf conf1\<and>
+                 (\<not>find_elem conf1 attr1)\<and>
+                 attr_elem attr1\<noteq>noelem)" by (auto simp:valid_inverse)
+  from 2 have 2:"find_elem conf1 attr\<or>
+                 attr_elem attr1=attr_elem attr" by (auto simp:find_inverse)
+  from 1 2 show "\<not> find_elem (delete_attr (attr_conf conf1 attr1) attr) attr"
+  proof -
+    show "attr_elem attr1 \<noteq> noelem \<and> conf1 = noattrconf \<or>
+          valid_attrconf conf1 \<and>
+          \<not> find_elem conf1 attr1 \<and> attr_elem attr1 \<noteq> noelem \<Longrightarrow>
+          find_elem conf1 attr \<or> attr_elem attr1 = attr_elem attr \<Longrightarrow>
+          \<not> find_elem (delete_attr (attr_conf conf1 attr1) attr) attr"
+    proof (erule disjE)+
+      show "attr_elem attr1 \<noteq> noelem \<and> conf1 = noattrconf \<Longrightarrow>
+            find_elem conf1 attr \<Longrightarrow>
+            \<not> find_elem (delete_attr (attr_conf conf1 attr1) attr) attr"
+        by (auto simp:ATTRCONFHLR6)
+    next
+      assume "attr_elem attr1 \<noteq> noelem \<and> conf1 = noattrconf"
+      from this have 1:"conf1 = noattrconf" by auto
+      assume "attr_elem attr1 = attr_elem attr"
+      from this have 2:"delete_attr(attr_conf conf1 attr1) attr=delete_attr conf1 attr"
+        by (auto simp:ATTRCONFHLR11)
+      show "\<not> find_elem (delete_attr (attr_conf conf1 attr1) attr) attr"
+      proof (auto simp:2)
+        show "find_elem (delete_attr conf1 attr) attr \<Longrightarrow> False"
+          by (auto simp add:1 ATTRCONFHLR10 ATTRCONFHLR6)
+      qed
+    next
+      show "find_elem conf1 attr \<or> attr_elem attr1 = attr_elem attr \<Longrightarrow>
+           valid_attrconf conf1 \<and>
+           \<not> find_elem conf1 attr1 \<and> attr_elem attr1 \<noteq> noelem \<Longrightarrow>
+           \<not> find_elem (delete_attr (attr_conf conf1 attr1) attr) attr"
+      proof (erule disjE)+
+        assume "valid_attrconf conf1 \<and>
+                \<not> find_elem conf1 attr1 \<and> attr_elem attr1 \<noteq> noelem"
+        from this have 1:"valid_attrconf conf1"
+                       and 2:"\<not> find_elem conf1 attr1"
+                       and 3:"attr_elem attr1 \<noteq> noelem" by auto
+        assume 4:"find_elem conf1 attr"
+        from 4 2 have 6:"attr_elem attr\<noteq>attr_elem attr1" by (auto simp:ATTRCONFHLR27)
+        from this have 5:"delete_attr(attr_conf conf1 attr1) attr=
+                          attr_conf (delete_attr conf1 attr) attr1" 
+          by (auto simp:ATTRCONFHLR12)
+        show "\<not> find_elem (delete_attr (attr_conf conf1 attr1) attr) attr"
+        proof (simp add:5;rule ATTRCONFHLR9)
+          from 1 4 6 show "\<not> find_elem (delete_attr conf1 attr) attr \<and>
+                          attr_elem attr1 \<noteq> attr_elem attr"
+            by (auto simp:0)
+        qed
+      next
+        assume "valid_attrconf conf1 \<and>
+                \<not> find_elem conf1 attr1 \<and> 
+                attr_elem attr1 \<noteq> noelem"
+        from this have 1:"valid_attrconf conf1"
+                       and 2:"\<not> find_elem conf1 attr1"
+                       and 3:"attr_elem attr1 \<noteq> noelem" by auto
+        assume 4:"attr_elem attr1 = attr_elem attr"
+        from this have 5:"delete_attr(attr_conf conf1 attr1) attr=delete_attr conf1 attr"
+          by (auto simp:ATTRCONFHLR11)
+        show "\<not> find_elem (delete_attr (attr_conf conf1 attr1) attr) attr"
+        proof (simp add:5;rule ATTRCONFHLR29)
+          from 2 4 show "\<not> find_elem conf1 attr" by (auto simp:ATTRCONFHLR30)
+        qed
+      qed
+    qed
+  qed
 qed
 
 end
