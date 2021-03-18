@@ -40,9 +40,8 @@ primrec delete_usrattr::"UsrAttrConf\<Rightarrow>UsrAttr\<Rightarrow>UsrAttrConf
 (if usrattr_id attrx=usrattr_id attr
 then
 delete_usrattr conf attr
-else if usrattr_id attrx\<noteq>usrattr_id attr
-then usrattr_conf(delete_usrattr conf attr) attrx
-else usrattr_conf conf attrx)"
+else
+usrattr_conf(delete_usrattr conf attr) attrx)"
 
 primrec get_usrattr::"UsrAttrConf\<Rightarrow>UsrId\<Rightarrow>UsrAttr" where
 "get_usrattr nousrattrconf uid=nousrattr"
@@ -50,10 +49,8 @@ primrec get_usrattr::"UsrAttrConf\<Rightarrow>UsrId\<Rightarrow>UsrAttr" where
 (if usrattr_id attr=uid
 then
 attr
-else if usrattr_id attr\<noteq>uid
-then
-get_usrattr conf uid
-else nousrattr)"
+else
+get_usrattr conf uid)"
 
 primrec valid_usrattrconf::"UsrAttrConf\<Rightarrow>bool" where
 "valid_usrattrconf nousrattrconf=False"
@@ -155,18 +152,10 @@ next
   show "usrattr_id attr = elem \<Longrightarrow>
        get_usrattr (usrattr_conf conf attr) elem = attr" by auto
 next
-  fix elem
-  fix attr
-  fix conf
-  show "get_usrattr conf elem = nousrattr \<and> 
-       usrattr_id attr \<noteq> elem \<Longrightarrow>
-       get_usrattr (usrattr_conf conf attr) elem = nousrattr" by auto
-next
   fix conf
   fix elem
   fix attr
-  show "get_usrattr conf elem \<noteq> nousrattr \<and> 
-       usrattr_id attr \<noteq> elem \<Longrightarrow>
+  show "usrattr_id attr \<noteq> elem \<Longrightarrow>
        get_usrattr (usrattr_conf conf attr) elem = get_usrattr conf elem" by auto
 next
   show "\<not> valid_usrattrconf nousrattrconf" by auto
