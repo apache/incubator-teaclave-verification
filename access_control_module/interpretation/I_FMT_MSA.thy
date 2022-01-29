@@ -41,10 +41,7 @@ primrec delete_subjattr::"SubjAttrConf\<Rightarrow>SubjAttr\<Rightarrow>SubjAttr
 (if subjattr_subjid sattrx=subjattr_subjid sattr
 then
 delete_subjattr conf sattr
-else if subjattr_subjid sattrx\<noteq>subjattr_subjid sattr
-then
-subjattr_conf(delete_subjattr conf sattr) sattrx
-else subjattr_conf conf sattrx)"
+else subjattr_conf(delete_subjattr conf sattr) sattrx)"
 
 primrec get_subjattr::"SubjAttrConf\<Rightarrow>ResrcId\<Rightarrow>SubjAttr" where
 "get_subjattr nosubjattrconf rid=nosubjattr"
@@ -52,10 +49,7 @@ primrec get_subjattr::"SubjAttrConf\<Rightarrow>ResrcId\<Rightarrow>SubjAttr" wh
 (if subjattr_subjid sattr=rid
 then
 sattr
-else if subjattr_subjid sattr\<noteq>rid
-then
-get_subjattr conf rid
-else nosubjattr)"
+else get_subjattr conf rid)"
 
 primrec subjattrconf_uniq::"SubjAttrConf\<Rightarrow>bool" where
 "subjattrconf_uniq nosubjattrconf=False"
@@ -173,18 +167,10 @@ next
   show "subjattr_subjid attr = elem \<Longrightarrow>
        get_subjattr (subjattr_conf conf attr) elem = attr" by auto
 next
-  fix attr
-  fix elem
-  fix conf
-  show "get_subjattr conf elem = nosubjattr \<and>
-       subjattr_subjid attr \<noteq> elem \<Longrightarrow>
-       get_subjattr (subjattr_conf conf attr) elem = nosubjattr" by auto
-next
   fix elem
   fix attr
   fix conf
-  show "get_subjattr conf elem \<noteq> nosubjattr \<and>
-       subjattr_subjid attr \<noteq> elem \<Longrightarrow>
+  show "subjattr_subjid attr \<noteq> elem \<Longrightarrow>
        get_subjattr (subjattr_conf conf attr) elem =
        get_subjattr conf elem" by auto
 next
@@ -311,10 +297,8 @@ primrec delete_objattr::"ObjAttrConf\<Rightarrow>ObjAttr\<Rightarrow>ObjAttrConf
 (if objattr_objid oattrx=objattr_objid oattr
 then
 delete_objattr conf oattr
-else if objattr_objid oattrx\<noteq>objattr_objid oattr 
-then
-objattr_conf(delete_objattr conf oattr) oattrx
-else objattr_conf conf oattrx)"
+else 
+objattr_conf(delete_objattr conf oattr) oattrx)"
 
 primrec get_objattr::"ObjAttrConf\<Rightarrow>ResrcId\<Rightarrow>ObjAttr" where
 "get_objattr noobjattrconf rid=noobjattr"
@@ -322,10 +306,8 @@ primrec get_objattr::"ObjAttrConf\<Rightarrow>ResrcId\<Rightarrow>ObjAttr" where
 (if objattr_objid oattr=rid
 then
 oattr
-else if objattr_objid oattr\<noteq>rid
-then
-get_objattr conf rid
-else noobjattr)"
+else
+get_objattr conf rid)"
 
 primrec valid_objattrconf::"ObjAttrConf\<Rightarrow>bool" where
 "valid_objattrconf noobjattrconf=False"
@@ -422,16 +404,10 @@ next
   show "objattr_objid attr = elem \<Longrightarrow>
        get_objattr (objattr_conf conf attr) elem = attr" by auto
 next
-  fix attr
-  fix elem
-  fix conf
-  show "get_objattr conf elem = noobjattr \<and> objattr_objid attr \<noteq> elem \<Longrightarrow>
-       get_objattr (objattr_conf conf attr) elem = noobjattr" by auto
-next
   fix elem
   fix attr
   fix conf
-  show "get_objattr conf elem \<noteq> noobjattr \<and> objattr_objid attr \<noteq> elem \<Longrightarrow>
+  show "objattr_objid attr \<noteq> elem \<Longrightarrow>
        get_objattr (objattr_conf conf attr) elem = get_objattr conf elem" by auto
 next
   show "\<not> valid_objattrconf noobjattrconf" by auto
